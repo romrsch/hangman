@@ -55,7 +55,7 @@ def displayBoard(missedLetters, correctLetters, secretWord):
         print(letter, end=' ')
     print()
 
-    blanks = '__' * len(secretWord)
+    blanks = '_' * len(secretWord)
 
     for i in range(len(secretWord)):    # заменяет пропуски отгаданными буквами
         if secretWord[i] in correctLetters:
