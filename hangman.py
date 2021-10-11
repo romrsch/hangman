@@ -112,6 +112,21 @@ def playAgain():
     return input().lower().startswith('д')
 
 print('В И С Е Л И Ц А')
+
+print('Выберите уровень сложности: Л -легкий, С -средний, Т -тяжелый')
+difficulty = ''
+while difficulty not in 'ЛСТ':
+    print('Выберите уровень сложности: Л -легкий, С -средний, Т -тяжелый')
+difficulty = input().upper()
+if difficulty == 'С':
+    del HANGMAN_PICS[7]
+    del HANGMAN_PICS[6]
+if difficulty == 'Т':
+    del HANGMAN_PICS[6]
+    del HANGMAN_PICS[5]
+    del HANGMAN_PICS[4]
+    del HANGMAN_PICS[3]
+
 missedLetters = ''
 correctLetters = ''
 secretWord, secretSet = getRandomWord(words)
