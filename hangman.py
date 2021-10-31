@@ -1,183 +1,45 @@
-#!/usr/bin/env python3
-import random
-import os
-import json
+# Game status categories
+# Change the values as you see fit
+STATUS_WIN = "win"
+STATUS_LOSE = "lose"
+STATUS_ONGOING = "ongoing"
 
-HANGMAN_PICS = [ 
-'''
-      +---+
-      |   |
-          |
-          |
-          |
-          |
-  =========''','''
- 
-     +---+
-     |   |
-     O   |
-         |
-         |
-         |
-  =========''','''
- 
-     +---+
-     |   |
-     O   |
-     |   |
-         |
-         |
-  =========''','''
- 
-     +---+
-     |   |
-     O   |
-    /|   |
-         |
-         |
-  =========''','''
- 
-     +---+
-     |   |
-     O   |
-    /|\  |
-         |
-         |
-  =========''','''
- 
-     +---+
-     |   |
-     O   |
-    /|\  |
-    /    |
-         |
-  =========''','''
- 
-     +---+
-     |   |
-     O   |
-    /|\  |
-    / \  |
-         |
-  =========''']
-
-#words={'Животные':'аист акула бабуин баран барсук бобр бык верблюд волк воробей ворон выдра голубь гусь жаба зебра змея индюк кит кобра коза козел койот корова кошка кролик крыса курица лама ласка лебедь лев лиса лосось лось лягушка медведь моллюск моль мул муравей мышь норка носорог обезьяна овца окунь олень орел осел панда паук питон попугай пума семга скунс собака сова тигр тритон тюлень утка форель хорек черепаха ястреб ящерица'.split(), 
-#'Фигуры':'квадрат треугольник прямоугольник круг эллипс ромб трапеция параллелограмм пятиугольник шестиугольник восьмиугольник'.split(), 
-#'Фрукты':'яблоко апельсин лимон лайм груша мандарин виноград грейпфрут персик банан абрикос манго банан нектарин'.split(), 
-#'Цвета':'красный оранжевый желтый зеленый синий голубой фиолетовый белый черный коричневый'.split()}
-
-words = {}
-with open("dictionary.json") as config_file:
-    words=json.load(config_file)
-
-def getRandomWord(wordDict):
-    # Эта функция возвращает случайную строку из переданного словаря.
-    wordKey = random.choice(list(wordDict.keys()))
-    wordIndex = random.randint(0, len(wordDict[wordKey]) - 1)
-    
-    return wordDict[wordKey][wordIndex],wordKey
-
-def displayBoard(missedLetters, correctLetters, secretWord):
-    print(HANGMAN_PICS[len(missedLetters)])
-    print()
-
-    print('Ошибочные буквы:', end=' ')
-    for letter in missedLetters:
-        print(letter, end=' ')
-    print()
-
-    blanks = '_' * len(secretWord)
-
-    for i in range(len(secretWord)):    # заменяет пропуски отгаданными буквами
-        if secretWord[i] in correctLetters:
-            blanks = blanks[:i]+secretWord[i]+blanks[i+1:]
-
-    for letter in blanks: # Показывает секретное слово с пробелами между буквами
-        print(letter, end=' ')
-    print()
-
-
-def getGuess(alreadyGuessed):
-    # Возвращает букву, введенную игроком. Эта функция проверяет, что игрок ввел только одну букву и ничего больше.
-    while True:
-        print('Введите букву.')
-        guess = input()
-        guess = guess.lower()
-        if len(guess) != 1:
-            print('Пожалуйста, введите одну букву.')
-        elif guess in alreadyGuessed:
-            print('Вы уже называли эту букву. Назовите другую.')
-        elif guess not in 'абвгдеежзийклмнопрстуфхцчшщъыьэюя':
-            print('Пожалуйста, введите БУКВУ.')
+class Hangman(object):
+    def __init__(self, word):
+        self.remaining_guesses = 9
+        self.status = STATUS_ONGOING
+        self._word = word
+        self._guesses = []
+    def guess(self, char):
+        if self.status == STATUS_LOSE:
+            raise ValueError("Вы исчерпали все попытки!")
+        elif self.status == STATUS_WIN:
+            raise ValueError("Вы угадали!")
+        if char in self._word:
+            if char in self._guesses:
+                # no repeats; counts as a move
+                self.remaining_guesses -= 1
+            else:
+                self._guesses.append(char)
         else:
-            return guess
+            # a miss
 
-def playAgain():
-    # Эта функция возвращает значение True, если игрок хочет сыграть заново; в противном случае возвращает False.
-    print('Хотите сыграть еще? (да или нет)')
-    return input().lower().startswith('д')
+            self.remaining_guesses -= 1
+            self._guesses.append(char)            
+        # test for winning or losing
+        if self.remaining_guesses < 0:
+            self.status = STATUS_LOSE
 
-print('В И С Е Л И Ц А')
-
-print('Выберите уровень сложности: Л -легкий, С -средний, Т -тяжелый')
-difficulty = ''
-while difficulty not in 'ЛСТ':
-    print('Выберите уровень сложности: Л -легкий, С -средний, Т -тяжелый')
-difficulty = input().upper()
-if difficulty == 'С':
-    del HANGMAN_PICS[8]
-    del HANGMAN_PICS[7]
-if difficulty == 'Т':
-    del HANGMAN_PICS[6]
-    del HANGMAN_PICS[5]
-    del HANGMAN_PICS[4]
-    del HANGMAN_PICS[3]
-
-missedLetters = ''
-correctLetters = ''
-secretWord, secretSet = getRandomWord(words)
-gameIsDone = False
-
-
-while True:
-    print('Секретное слово из набора: ' +secretSet)
-    displayBoard(missedLetters, correctLetters, secretWord)
-
-    # Позволяет игроку ввести букву.
-
-    guess = getGuess(missedLetters + correctLetters)
-
-    if guess in secretWord:
-        correctLetters = correctLetters + guess
-
-        # Проверяет, выиграл ли игрок.
-        foundAllLetters = True
-        for i in range(len(secretWord)):
-            if secretWord[i] not in correctLetters:
-                foundAllLetters = False
-                break
-        if foundAllLetters:
-            print('ДА! Секретное слово - "' + secretWord + '"! Вы угадали!')
-            gameIsDone = True
-    else:
-
-        missedLetters = missedLetters + guess
-    
-    # Проверяет, превысил ли игрок лимит попыток и проиграл.
-        if len(missedLetters) == len(HANGMAN_PICS) - 1:
-            displayBoard(missedLetters, correctLetters, secretWord)
-            print('Вы исчерпали все попытки!\nНеугадано букв:'+str(len(missedLetters))+'и угадано букв:'+str(len(correctLetters))+'.Было загадано слово"'+secretWord+'".')
-            gameIsDone = True
-
-    # Запрашивает, хочет ли игрок сыграть заново (только если игра завершена).
-    if gameIsDone:
-        if playAgain():
-            missedLetters = ''
-            correctLetters = ''
-            gameIsDone = False
-            secretWord, secretSet = getRandomWord(words)
-            
-
-        else:
-            break
-
+        # unless they just guessed right...
+        if all([l in self._guesses for l in self._word]):
+            self.status = STATUS_WIN
+    def get_masked_word(self):
+        m = ["_"] * len(self._word)
+        for l in self._guesses:
+            for i, letter in enumerate(self._word):
+                if letter == l:
+                    m[i] = l
+        return ''.join(m)
+        
+    def get_status(self):
+        return self.status
