@@ -1,6 +1,7 @@
 import unittest
 import hangman
 from hangman import Hangman
+
 # Tests adapted from csharp//hangman/HangmanTest.cs
 class HangmanTests(unittest.TestCase):
     def test_initially_9_failures_are_allowed(self):
